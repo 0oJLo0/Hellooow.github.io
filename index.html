@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>...</title>
+  <!-- Custom Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      background: black;
+    }
+
+    .container {
+      width: 100%;
+      height: 100%;
+      background-image: radial-gradient(1600px at 70% 120%, rgba(0,0,0,1) 10%, #020409 100%);
+    }
+
+    #universe, #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #footerContent {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 110%;
+      color: rgba(200, 220, 255, .7);
+      width: 100%;
+      position: fixed;
+      bottom: 50px;
+      padding: 10px;
+      text-align: center;
+      z-index: 20;
+    }
+
+    #musicControls {
+      position: fixed;
+      bottom: 10px;
+      width: 100%;
+      text-align: center;
+      z-index: 30;
+    }
+
+    #musicBtn {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+    }
+    #musicBtn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="universe"></canvas>
+    <canvas id="canvas"></canvas>
+    <div id="footerContent"> Do you still like the moon?</div></div>
+    <div id="musicControls">
+      <button id="musicBtn">▶ Play Music</button>
+      <audio id="bgMusic" loop>
+        <!-- Replace the src with your own music file (mp3/ogg) -->
+        <source src="/Clair de Lune (Studio Version).mp3" type="audio/mpeg">
+      </audio>
+    </div>
+  </div>
+
+  <script>
+    // ===== METEOR SHOWER + MOON =====
+    const ucanvas = document.getElementById("universe");
+    const uctx = ucanvas.getContext("2d");
+    ucanvas.width = window.innerWidth;
+    ucanvas.height = window.innerHeight;
+
+    let meteors = [];
+
+    function createMeteor() {
+      return {
+        x: Math.random() * ucanvas.width,
+        y: -20,
+        length: Math.random() * 80 + 20,
+        speed: Math.random() * 8 + 4,
+        angle: Math.PI / 4,
+        opacity: Math.random() * 0.5 + 0.5
+      };
+    }
+
+    function drawMoon() {
+      const moonX = ucanvas.width * 0.8;
+      const moonY = ucanvas.height * 0.2;
+      const radius = 60;
+
+      let gradient = uctx.createRadialGradient(moonX, moonY, radius * 0.5, moonX, moonY, radius * 2);
+      gradient.addColorStop(0, "rgba(255,255,210,0.9)");
+      gradient.addColorStop(1, "rgba(255,255,210,0)");
+
+      uctx.beginPath();
+      uctx.arc(moonX, moonY, radius * 2, 0, Math.PI * 2);
+      uctx.fillStyle = gradient;
+      uctx.fill();
+
+      uctx.beginPath();
+      uctx.arc(moonX, moonY, radius, 0, Math.PI * 2);
+      uctx.fillStyle = "lightyellow";
+      uctx.fill();
+    }
+
+    function drawMeteors() {
+      uctx.clearRect(0, 0, ucanvas.width, ucanvas.height);
+      drawMoon();
+
+      if (Math.random() < 0.1) meteors.push(createMeteor());
+
+      meteors.forEach((m, i) => {
+        const dx = Math.cos(m.angle) * m.length;
+        const dy = Math.sin(m.angle) * m.length;
+
+        uctx.beginPath();
+        uctx.moveTo(m.x, m.y);
+        uctx.lineTo(m.x - dx, m.y - dy);
+        uctx.strokeStyle = `rgba(255,255,255,${m.opacity})`;
+        uctx.lineWidth = 2;
+        uctx.stroke();
+
+        m.x += Math.cos(m.angle) * m.speed;
+        m.y += Math.sin(m.angle) * m.speed;
+
+        if (m.y > ucanvas.height + 50 || m.x > ucanvas.width + 50) {
+          meteors.splice(i, 1);
+        }
+      });
+
+      requestAnimationFrame(drawMeteors);
+    }
+    drawMeteors();
+
+    // ===== PARTICLE TEXT =====
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particles = [];
+    const message = "Hellooo";
+    let mouse = { x: null, y: null, radius: 100 };
+
+    function initParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = "80px 'Orbitron', sans-serif"; // Custom font
+      ctx.textAlign = "center";
+      ctx.fillStyle = "white";
+      ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+
+      const textData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      particles = [];
+
+      for (let y = 0; y < textData.height; y += 6) {
+        for (let x = 0; x < textData.width; x += 6) {
+          const index = (y * textData.width + x) * 4;
+          if (textData.data[index + 3] > 128) {
+            particles.push({
+              x: Math.random() * canvas.width,
+              y: Math.random() * canvas.height,
+              targetX: x,
+              targetY: y,
+              vx: 0,
+              vy: 0
+            });
+          }
+        }
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "light";
+
+      particles.forEach(p => {
+        let dx = p.targetX - p.x;
+        let dy = p.targetY - p.y;
+        p.vx += dx * 0.02;
+        p.vy += dy * 0.02;
+
+        let mx = p.x - mouse.x;
+        let my = p.y - mouse.y;
+        let dist = Math.sqrt(mx*mx + my*my);
+        if (dist < mouse.radius) {
+          p.vx += mx * 0.1;
+          p.vy += my * 0.1;
+        }
+
+        p.vx *= 0.9;
+        p.vy *= 0.9;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      requestAnimationFrame(animateParticles);
+    }
+
+    initParticles();
+    animateParticles();
+
+    // ===== INTERACTIVITY =====
+    window.addEventListener("mousemove", e => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    window.addEventListener("touchmove", e => {
+      let touch = e.touches[0];
+      mouse.x = touch.clientX;
+      mouse.y = touch.clientY;
+    });
+
+    window.addEventListener("resize", () => {
+      ucanvas.width = canvas.width = window.innerWidth;
+      ucanvas.height = canvas.height = window.innerHeight;
+      initParticles();
+    });
+
+    // ===== MUSIC CONTROL =====
+    const bgMusic = document.getElementById("bgMusic");
+    const musicBtn = document.getElementById("musicBtn");
+
+    musicBtn.addEventListener("click", () => {
+      if (bgMusic.paused) {
+        bgMusic.play();
+        musicBtn.textContent = "⏸";
+      } else {
+        bgMusic.pause();
+        musicBtn.textContent = "▶";
+      }
+    });
+  </script>
+</body>
+</html>
